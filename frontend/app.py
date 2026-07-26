@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://127.0.0.1:8000/predict"
+API_URL = "https://delivery-backend-api-gfif.onrender.com/predict"
 
 st.set_page_config(page_title="Delivery Estimator", page_icon="🏍️")
 st.title("🏍️ Food Delivery Time Estimator")
