@@ -6,7 +6,6 @@ import os
 
 app = FastAPI(title="Food Delivery Prediction API")
 
-# Load the model
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, 'training', 'delivery_ensemble.pkl')
 try:
@@ -16,18 +15,15 @@ except Exception as e:
     print(f"Error loading model: {e}")
     model = None
 
-# 1. Updated Schema to match your exact input flow
 class DeliveryRequest(BaseModel):
     Distance_km: float
     Weather: str
     Traffic_Level: str
     Time_of_Day: str
     Vehicle_Type: str
-    Preparation_Time_min: int  # Added this field
+    Preparation_Time_min: int 
     Courier_Experience_yrs: int
 
-# 2. Add Preparation_Time_min to expected columns
-# IMPORTANT: Ensure this order exactly matches your X_train.columns from your EDA
 EXPECTED_COLUMNS = [
     'Distance_km', 'Traffic_Level', 'Preparation_Time_min',
     'Courier_Experience_yrs', 'Weather_Clear',
@@ -43,23 +39,19 @@ def predict_delivery_time(request: DeliveryRequest):
 
     input_dict = request.model_dump()
     df_input = pd.DataFrame([input_dict])
-    
-    # Transform Traffic Level
+    #traffic importance
     traffic_mapping = {'Low': 0, 'Medium': 1, 'High': 2}
     df_input['Traffic_Level'] = df_input['Traffic_Level'].map(traffic_mapping)
     
-    # One-Hot Encode categorical columns
+    #OHE
     norml_cols = ['Weather', 'Time_of_Day', 'Vehicle_Type']
     df_encoded = pd.get_dummies(df_input, columns=norml_cols, dtype=int)
     
-    # Align columns with training data
     for col in EXPECTED_COLUMNS:
         if col not in df_encoded.columns:
             df_encoded[col] = 0
             
-    # Filter and order columns for the model
     df_final = df_encoded[EXPECTED_COLUMNS]
     
-    # Predict and return
     prediction = model.predict(df_final)[0]
     return {"estimated_delivery_minutes": round(float(prediction))}
